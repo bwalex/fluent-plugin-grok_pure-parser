@@ -23,6 +23,7 @@ module Fluent
         @time_parser = TimeParser.new(@time_format)
         @mutex = Mutex.new
         @grok = Grok.new
+        @grok.logger = LogProxy.new(log)
       end
 
       def configure(conf)
@@ -59,7 +60,20 @@ module Fluent
         else
           yield nil, nil
         end
+      end
 
+      class LogProxy
+        def initialize(logger)
+          @logger = logger
+        end
+
+        def method_missing(sym, *args, &block)
+          @logger.send(sym, *args, &block)
+        end
+
+        %w(debug info warn error fatal).each do |name|
+          define_method("#{name}?".to_sym) { true }
+        end
       end
     end
   end
