@@ -1,24 +1,36 @@
 # Fluent::Plugin::grok_pure::Parser
 
-TODO: Write a gem description
+This fluentd parser plugin adds a parse format `grok_pure` which allows using any Grok pattern. It uses the [jls-grok](https://rubygems.org/gems/jls-grok) ruby gem, so it supports all Grok features, including type coercion.
 
 ## Installation
 
-Add this line to your application's Gemfile:
+Install the plugin by running:
 
-    gem 'fluent-plugin-grok_pure-parser'
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install fluent-plugin-grok_pure-parser
+    fluent-gem install fluent-plugin-grok_pure-parser
 
 ## Usage
 
-TODO: Write usage instructions here
+```
+<source>
+  type tail
+  path /path/to/log
+  tag foo.log
+
+  format grok_pure
+  grok_pattern %{HAPROXYHTTP}
+  grok_pattern_path /etc/grok_patterns
+</source>
+```
+
+Setting `format` to `grok_pure` enables the Grok parser. The two main configuration options are `grok_pattern_path`, which must be the path to a directory that contains grok patterns, and `grok_pattern`, which is the pattern used to match and format the record. All named grok patterns will end up as keys in the resulting record.
+
+The following standard format options are also supported:
+
+ - `time_key`: Sets the name of the grok capture group that contains the log timestamp
+ - `time_format`: Sets the format of the log timestamp, for parsing
+ - type coercion via the `TypeConverter` mixin (no official documentation available yet)
+
+Grok patterns can generally be of the form of `%{PATTERN_NAME}`, `%{PATTERN_NAME:CAPTURE_NAME}` or `%{PATTERN_NAME:CAPTURE_NAME:type_coercion}`. See the [Logstash Grok documentation](http://logstash.net/docs/latest/filters/grok) for more details.
 
 ## Contributing
 
