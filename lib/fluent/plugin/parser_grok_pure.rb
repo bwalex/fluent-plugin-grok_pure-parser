@@ -20,7 +20,6 @@ module Fluent
 
       def initialize
         super
-        @time_parser = TimeParser.new(@time_format)
         @mutex = Mutex.new
         @grok = Grok.new
         @grok.logger = LogProxy.new(log)
@@ -28,6 +27,8 @@ module Fluent
 
       def configure(conf)
         super
+
+        @time_parser = TimeParser.new(@time_format)
 
         if @grok_pattern_path
           Dir["#{@grok_pattern_path}/*"].sort.each do |f|
