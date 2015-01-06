@@ -29,7 +29,7 @@ module Fluent
         super
 
         if @grok_pattern_path
-          Dir["#{@grok_pattern_path}/*"].each do |f|
+          Dir["#{@grok_pattern_path}/*"].sort.each do |f|
             @grok.add_patterns_from_file(f)
           end
         end
