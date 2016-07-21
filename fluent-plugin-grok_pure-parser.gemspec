@@ -7,8 +7,8 @@ Gem::Specification.new do |spec|
   spec.version       = File.read("VERSION").strip
   spec.authors       = ["Alex Hornung"]
   spec.email         = ["alex@alexhornung.com"]
-  spec.description   = %q{fluentd parser plugin to be able to use Grok patterns}
-  spec.summary       = spec.description
+  spec.description   = "This plugin uses jls-grok under the hood which allows you to use the full range of grok patterns."
+  spec.summary       = %q{fluentd parser plugin to be able to use Grok patterns}
   spec.homepage      = "https://github.com/bwalex/fluent-plugin-grok_pure-parser"
   spec.license       = "MIT"
   spec.has_rdoc      = false
