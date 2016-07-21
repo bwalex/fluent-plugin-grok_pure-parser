@@ -12,17 +12,13 @@ module Fluent
       config_param :grok_pattern, :string
       config_param :grok_pattern_path, :string, :default => nil
 
-      unless method_defined?(:log)
-        define_method(:log) { $log }
-      end
-
       class PatternError < ParserError; end
 
       def initialize
         super
         @mutex = Mutex.new
         @grok = Grok.new
-        @grok.logger = LogProxy.new(log)
+        @grok.logger = LogProxy.new($log)
       end
 
       def configure(conf)
