@@ -34,7 +34,7 @@ module Fluent
         end
 
         begin
-          if @conf['grok_pattern']
+          if conf['grok_pattern']
             @parsers << @grok.compile(@grok_pattern, true)
           else
             grok_confs = @conf.elements.select {|e| e.name == 'grok'}
