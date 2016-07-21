@@ -17,29 +17,20 @@ module Fluent
       def initialize
         super
         @mutex = Mutex.new
-        @grok = Grok.new
-        @grok.logger = LogProxy.new($log)
-        @parsers = []
+        @groks = []
       end
 
       def configure(conf)
         super
-
         @time_parser = TimeParser.new(@time_format)
-
-        if @grok_pattern_path
-          Dir["#{@grok_pattern_path}/*"].sort.each do |f|
-            @grok.add_patterns_from_file(f)
-          end
-        end
 
         begin
           if conf['grok_pattern']
-            @parsers << @grok.compile(@grok_pattern, true)
+            @groks << configure_grok(conf['grok_pattern'])
           else
-            grok_confs = @conf.elements.select {|e| e.name == 'grok'}
+            grok_confs = conf.elements.select {|e| e.name == 'grok'}
             grok_confs.each do |grok_conf|
-              @parsers << @grok.compile(@grok_pattern, true)
+              @groks << configure_grok(grok_conf['grok_pattern'])
             end
           end
         rescue Grok::PatternError => e
@@ -47,12 +38,24 @@ module Fluent
         end
       end
 
+      def configure_grok(grok_pattern)
+        grok = Grok.new
+        grok.logger = LogProxy.new($log)
+        if @grok_pattern_path
+          Dir["#{@grok_pattern_path}/*"].sort.each do |f|
+            grok.add_patterns_from_file(f)
+          end
+        end
+        grok.compile(grok_pattern, true)
+        grok
+      end
+
       def parse(text)
-        @parsers.each do |parser|
+        @groks.each do |groker|
           time = nil
           record = {}
 
-          matched = @parser.match_and_capture(text) do |k,v|
+          matched = groker.match_and_capture(text) do |k,v|
             if k == @time_key
               time = @mutex.synchronize { @time_parser.parse(v) }
             else
@@ -65,6 +68,7 @@ module Fluent
             yield time, record
           end
         end
+
         yield nil, nil
       end
 
