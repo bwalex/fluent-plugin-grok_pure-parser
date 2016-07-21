@@ -9,7 +9,7 @@ module Fluent
 
       config_param :time_format, :string, :default => nil
       config_param :time_key, :string, :default => 'time'
-      config_param :grok_pattern, :string
+      config_param :grok_pattern, :string, :default => nil
       config_param :grok_pattern_path, :string, :default => nil
 
       class PatternError < ParserError; end
@@ -19,6 +19,7 @@ module Fluent
         @mutex = Mutex.new
         @grok = Grok.new
         @grok.logger = LogProxy.new($log)
+        @parsers = []
       end
 
       def configure(conf)
@@ -33,30 +34,38 @@ module Fluent
         end
 
         begin
-          @grok.compile(@grok_pattern, true)
+          if @conf['grok_pattern']
+            @parsers << @grok.compile(@grok_pattern, true)
+          else
+            grok_confs = @conf.elements.select {|e| e.name == 'grok'}
+            grok_confs.each do |grok_conf|
+              @parsers << @grok.compile(@grok_pattern, true)
+            end
+          end
         rescue Grok::PatternError => e
           raise PatternError, e.message
         end
       end
 
       def parse(text)
-        time = nil
-        record = {}
+        @parsers.each do |parser|
+          time = nil
+          record = {}
 
-        matched = @grok.match_and_capture(text) do |k,v|
-          if k == @time_key
-            time = @mutex.synchronize { @time_parser.parse(v) }
-          else
-            record[k] = @type_converters.nil? ? v : convert_type(k,v)
+          matched = @parser.match_and_capture(text) do |k,v|
+            if k == @time_key
+              time = @mutex.synchronize { @time_parser.parse(v) }
+            else
+              record[k] = @type_converters.nil? ? v : convert_type(k,v)
+            end
+          end
+
+          if matched
+            time ||= Engine.now if @estimate_current_event
+            yield time, record
           end
         end
-
-        if matched
-          time ||= Engine.now if @estimate_current_event
-          yield time, record
-        else
-          yield nil, nil
-        end
+        yield nil, nil
       end
 
       class LogProxy
