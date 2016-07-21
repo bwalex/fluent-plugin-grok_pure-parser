@@ -66,6 +66,7 @@ module Fluent
           if matched
             time ||= Engine.now if @estimate_current_event
             yield time, record
+            return
           end
         end
 
